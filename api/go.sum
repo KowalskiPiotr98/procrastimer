@@ -1,0 +1,4 @@
+github.com/KowalskiPiotr98/gotabase v0.2.0 h1:rmPuiWD9tXn110fYsGrvdIUPB0G8S9cgR1/MVj7xfuk=
+github.com/KowalskiPiotr98/gotabase v0.2.0/go.mod h1:PAUTAqPRZk6/5jds+07OcNsYNDQUEaaX4iDP8MI+1OA=
+github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
