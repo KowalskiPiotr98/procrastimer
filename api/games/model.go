@@ -5,6 +5,7 @@ import (
 	"procrastimer/common/repository"
 )
 
+// Game stores information about a game the user has played or intends to play.
 type Game struct {
 	Id      uuid.UUID
 	Name    string
