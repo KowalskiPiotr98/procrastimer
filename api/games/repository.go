@@ -34,6 +34,12 @@ func GetGames(userId uuid.UUID, skip int, take int) ([]*Game, error) {
 	return repository.ScanObjects(results, scanGame)
 }
 
+// CreateGame adds a new game to the database for the creating user.
+func CreateGame(game *Game, userCreatingId uuid.UUID) error {
+	query := "insert into games (name, user_id) values ($1, $2) returning id"
+	return repository.CreateObject(getDatabase(), game, query, game.Name, userCreatingId)
+}
+
 func scanGame(row gotabase.Row) (*Game, error) {
 	game := &Game{}
 	if err := row.Scan(&game.Id, &game.Name, &game.AddedOn); err != nil {

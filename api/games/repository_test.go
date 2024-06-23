@@ -74,3 +74,32 @@ func TestGetGames_ReturnsOnlyAuthorised(t *testing.T) {
 	assert.Contains(t, ids, game1.Id)
 	assert.Contains(t, ids, game2.Id)
 }
+
+func TestCreateGame_NewGame_AddedToDatabase(t *testing.T) {
+	_ = test.GetDatabaseWithCleanup(t)
+	userId := makeTestUser()
+	game := NewGame("test game")
+
+	err := CreateGame(game, userId)
+
+	assert.Nil(t, err)
+	dbGame, err := GetGame(game.Id, userId)
+	test.PanicOnErr(err)
+	assert.NotEqual(t, 0, dbGame.AddedOn)
+	dbGame.AddedOn = 0
+	assert.Equal(t, game, dbGame)
+}
+
+func TestCreateGame_DuplicateGame_ReturnsError(t *testing.T) {
+	_ = test.GetDatabaseWithCleanup(t)
+	userId := makeTestUser()
+	test.PanicOnErr(CreateGame(NewGame("test game"), userId))
+	game := NewGame("test game")
+
+	err := CreateGame(game, userId)
+
+	assert.Equal(t, repository.AlreadyExistsErr, err)
+	dbGames, err := GetGames(userId, 0, 100)
+	test.PanicOnErr(err)
+	assert.Equal(t, 1, len(dbGames))
+}
