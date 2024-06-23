@@ -1,20 +1,30 @@
 package games
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"procrastimer/common/repository"
 	"procrastimer/test"
 	"testing"
 )
 
-func TestGetGame_GameFound_ReturnsValidData(t *testing.T) {
-	_ = test.GetDatabaseWithCleanup(t)
+func makeTestUser() uuid.UUID {
 	userId := test.GetRandomUuid()
 	_, _ = getDatabase().Exec("insert into users (id, email) values ($1, $2)", userId, "test")
-	game := NewGame("test game")
+	return userId
+}
+
+func insertTestGame(game *Game, userId uuid.UUID) {
 	query := "insert into games (name, user_id) values ($1, $2) returning id"
-	result, _ := getDatabase().QueryRow(query, "test game", userId)
+	result, _ := getDatabase().QueryRow(query, game.Name, userId)
 	_ = result.Scan(&game.Id)
+}
+
+func TestGetGame_GameFound_ReturnsValidData(t *testing.T) {
+	_ = test.GetDatabaseWithCleanup(t)
+	userId := makeTestUser()
+	game := NewGame("test game")
+	insertTestGame(game, userId)
 
 	dbGame, err := GetGame(game.Id, userId)
 
@@ -34,12 +44,9 @@ func TestGetGame_GameNotFound_NotFoundReturned(t *testing.T) {
 
 func TestGetGame_UserNotAuthorised_ReturnsNotFound(t *testing.T) {
 	_ = test.GetDatabaseWithCleanup(t)
-	userId := test.GetRandomUuid()
-	_, _ = getDatabase().Exec("insert into users (id, email) values ($1, $2)", userId, "test")
+	userId := makeTestUser()
 	game := NewGame("test game")
-	query := "insert into games (name, user_id) values ($1, $2) returning id"
-	result, _ := getDatabase().QueryRow(query, "test game", userId)
-	_ = result.Scan(&game.Id)
+	insertTestGame(game, userId)
 
 	_, err := GetGame(game.Id, test.GetRandomUuid())
 
