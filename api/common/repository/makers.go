@@ -32,3 +32,32 @@ func CreateObject[T CreatableWithId](database gotabase.Connector, object T, quer
 	object.SetId(id)
 	return nil
 }
+
+// UpdateObjectWithVerify executes an update query and verifies if exactly a single record was modified in the database.
+//
+// NOTE: this function might return TooManyRowsAffected error, indicating that the query modified more than a single database row.
+// In this case, the query will not be automatically reverted.
+// For this reason, it is recommended to pass a transaction into this function and revert it on error.
+func UpdateObjectWithVerify(database gotabase.Connector, query string, args ...interface{}) error {
+	results, err := database.Exec(query, args...)
+	if err != nil {
+		if IsDuplicateErr(err) {
+			return AlreadyExistsErr
+		}
+		log.Warnf("Failed to update object in database: %v", err)
+		return err
+	}
+
+	affected, err := results.RowsAffected()
+	if err != nil {
+		log.Warnf("Failed to get affected rows by update query: %v", err)
+		return err
+	}
+	if affected == 1 {
+		return nil
+	}
+	if affected < 1 {
+		return DataNotFoundErr
+	}
+	return TooManyRowsAffected
+}
