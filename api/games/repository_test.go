@@ -103,3 +103,46 @@ func TestCreateGame_DuplicateGame_ReturnsError(t *testing.T) {
 	test.PanicOnErr(err)
 	assert.Equal(t, 1, len(dbGames))
 }
+
+func TestUpdateGame_GameExists_Updated(t *testing.T) {
+	_ = test.GetDatabaseWithCleanup(t)
+	userId := makeTestUser()
+	game := NewGame("test game")
+	insertTestGame(game, userId)
+
+	game.Name = "updated name"
+	err := UpdateGame(game, userId)
+
+	assert.Nil(t, err)
+	dbGame, err := GetGame(game.Id, userId)
+	test.PanicOnErr(err)
+	assert.Equal(t, game.Name, dbGame.Name)
+}
+
+func TestUpdateGame_UserNotAuthorised_ReturnsNotFound(t *testing.T) {
+	_ = test.GetDatabaseWithCleanup(t)
+	userId := makeTestUser()
+	game := NewGame("test game")
+	insertTestGame(game, userId)
+
+	game.Name = "updated name"
+	err := UpdateGame(game, test.GetRandomUuid())
+
+	assert.Equal(t, repository.DataNotFoundErr, err)
+	dbGame, err := GetGame(game.Id, userId)
+	test.PanicOnErr(err)
+	assert.Equal(t, "test game", dbGame.Name)
+}
+
+func TestUpdateGame_NewNameDuplicate_ReturnsAlreadyExists(t *testing.T) {
+	_ = test.GetDatabaseWithCleanup(t)
+	userId := makeTestUser()
+	game := NewGame("test game")
+	insertTestGame(game, userId)
+	insertTestGame(NewGame("updated name"), userId)
+
+	game.Name = "updated name"
+	err := UpdateGame(game, userId)
+
+	assert.Equal(t, repository.AlreadyExistsErr, err)
+}

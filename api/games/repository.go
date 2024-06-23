@@ -40,6 +40,23 @@ func CreateGame(game *Game, userCreatingId uuid.UUID) error {
 	return repository.CreateObject(getDatabase(), game, query, game.Name, userCreatingId)
 }
 
+// UpdateGame modified a single game for a single user.
+func UpdateGame(game *Game, userId uuid.UUID) error {
+	transaction, err := beginTransaction()
+	if err != nil {
+		log.Warnf("Failed to initialise transaction: %v", err)
+		return err
+	}
+	defer transaction.Rollback()
+
+	query := "update games set name = $3 where id = $1 and user_id = $2"
+	if err = repository.UpdateObjectWithVerify(transaction, query, game.Id, userId, game.Name); err != nil {
+		return err
+	}
+
+	return transaction.Commit()
+}
+
 func scanGame(row gotabase.Row) (*Game, error) {
 	game := &Game{}
 	if err := row.Scan(&game.Id, &game.Name, &game.AddedOn); err != nil {
