@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	DataNotFoundErr = errors.New("requested data was not found in the database")
+	DataNotFoundErr  = errors.New("requested data was not found in the database")
+	AlreadyExistsErr = errors.New("requested data is already in the database")
 )
 
 func IsDataNotFoundErr(err error) bool {
@@ -15,6 +16,14 @@ func IsDataNotFoundErr(err error) bool {
 	}
 	var pgErr *pq.Error
 	if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+		return true
+	}
+	return false
+}
+
+func IsDuplicateErr(err error) bool {
+	var pgErr *pq.Error
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		return true
 	}
 	return false

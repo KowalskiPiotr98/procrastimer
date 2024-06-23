@@ -16,6 +16,9 @@ type CreatableWithId interface {
 func CreateObject[T CreatableWithId](database gotabase.Connector, object T, query string, args ...interface{}) error {
 	result, err := database.QueryRow(query, args...)
 	if err != nil {
+		if IsDuplicateErr(err) {
+			return AlreadyExistsErr
+		}
 		log.Warnf("Failed to insert object to database: %v", err)
 		return err
 	}
