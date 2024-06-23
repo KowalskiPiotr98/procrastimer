@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"procrastimer/common/repository"
+	"procrastimer/common/slice"
 	"procrastimer/test"
 	"testing"
 )
@@ -51,4 +52,25 @@ func TestGetGame_UserNotAuthorised_ReturnsNotFound(t *testing.T) {
 	_, err := GetGame(game.Id, test.GetRandomUuid())
 
 	assert.Equal(t, repository.DataNotFoundErr, err)
+}
+
+func TestGetGames_ReturnsOnlyAuthorised(t *testing.T) {
+	_ = test.GetDatabaseWithCleanup(t)
+	userId := makeTestUser()
+	game1 := NewGame("test game 1")
+	game2 := NewGame("test game 2")
+	game3 := NewGame("test game 3")
+	game4 := NewGame("test game 4")
+	insertTestGame(game1, userId)
+	insertTestGame(game2, userId)
+	insertTestGame(game3, test.GetRandomUuid())
+	insertTestGame(game4, test.GetRandomUuid())
+
+	games, err := GetGames(userId, 0, 100)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(games))
+	ids := slice.Map(games, func(game *Game) uuid.UUID { return game.Id })
+	assert.Contains(t, ids, game1.Id)
+	assert.Contains(t, ids, game2.Id)
 }
